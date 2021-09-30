@@ -1,5 +1,8 @@
 # HR-Helper
-Программа-помощник  для HR.
+Программа-помощник  для HR.    
+**Последнюю версию программы можно скачать здесь https://github.com/praudmur/HR-Helper/releases**
+
+  
 
 ![изображение](https://user-images.githubusercontent.com/1259834/135495987-1e70c389-5d05-487f-aee8-85136929c2c6.png)
 
