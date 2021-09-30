@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="uiaction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="G:\Other downloads\wxWidgets-3.1.5\samples\sample.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{f070c328-dd76-47b1-a1dd-ac8028738a32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{e7ce21ee-6a35-4a74-b3c2-50663dee8e7a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ExcelWork.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenFileDialog.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WorkerClass.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleIni.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="p_Backup.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="p_MailMerge.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="p_CreateElements.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="p_Reestr.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
