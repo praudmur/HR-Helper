@@ -43,158 +43,125 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
  */
 
-#ifndef OPENXLSX_XLCOLOR_HPP
-#define OPENXLSX_XLCOLOR_HPP
+
+#ifndef OPENXLSX_XLDATETIME_HPP
+#define OPENXLSX_XLDATETIME_HPP
 
 #pragma warning(push)
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 
 // ===== External Includes ===== //
-#include <string>
+#include <ctime>
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
+#include "XLException.hpp"
 
+// ========== CLASS AND ENUM TYPE DEFINITIONS ========== //
 namespace OpenXLSX
 {
-    /**
-     * @brief
-     */
-    class OPENXLSX_EXPORT XLColor
+    class OPENXLSX_EXPORT XLDateTime
     {
-        //----------------------------------------------------------------------------------------------------------------------
-        //           Public Member Functions
-        //----------------------------------------------------------------------------------------------------------------------
-
     public:
-        /**
-         * @brief
-         */
-        XLColor();
 
         /**
-         * @brief
-         * @param alpha
-         * @param red
-         * @param green
-         * @param blue
+         * @brief Constructor.
          */
-        XLColor(uint8_t alpha, uint8_t red, uint8_t green, uint8_t blue);
+        XLDateTime();
 
         /**
-         * @brief
-         * @param red
-         * @param green
-         * @param blue
+         * @brief Constructor taking an Excel time point serial number as an argument.
+         * @param serial Excel time point serial number.
          */
-        XLColor(uint8_t red, uint8_t green, uint8_t blue);
+        explicit XLDateTime(double serial);
 
         /**
-         * @brief
-         * @param hexCode
+         * @brief Constructor taking a std::tm struct as an argument.
+         * @param timepoint A std::tm struct.
          */
-        explicit XLColor(const std::string& hexCode);
+        explicit XLDateTime(const std::tm& timepoint);
 
         /**
-         * @brief
-         * @param other
+         * @brief Copy constructor.
+         * @param other Object to be copied.
          */
-        XLColor(const XLColor& other);
+        XLDateTime(const XLDateTime& other);
 
         /**
-         * @brief
-         * @param other
+         * @brief Move constructor.
+         * @param other Object to be moved.
          */
-        XLColor(XLColor&& other) noexcept;
+        XLDateTime(XLDateTime&& other) noexcept;
 
         /**
-         * @brief
+         * @brief Destructor
          */
-        ~XLColor();
+        ~XLDateTime();
 
         /**
-         * @brief
-         * @param other
-         * @return
+         * @brief Copy assignment operator.
+         * @param other Object to be copied.
+         * @return Reference to the copied-to object.
          */
-        XLColor& operator=(const XLColor& other);
+        XLDateTime& operator=(const XLDateTime& other);
 
         /**
-         * @brief
-         * @param other
-         * @return
+         * @brief Move assignment operator.
+         * @param other Object to be moved.
+         * @return Reference to the moved-to object.
          */
-        XLColor& operator=(XLColor&& other) noexcept;
+        XLDateTime& operator=(XLDateTime&& other) noexcept;
 
         /**
-         * @brief
-         * @param alpha
-         * @param red
-         * @param green
-         * @param blue
+         * @brief Assignment operator taking an Excel date/time serial number as an argument.
+         * @param serial A floating point value with the serial number.
+         * @return Reference to the copied-to object.
          */
-        void set(uint8_t alpha, uint8_t red, uint8_t green, uint8_t blue);
+        XLDateTime& operator=(double serial);
 
         /**
-         * @brief
-         * @param red
-         * @param green
-         * @param blue
+         * @brief Assignment operator taking a std::tm object as an argument.
+         * @param timepoint std::tm object with the time point
+         * @return Reference to the copied-to object.
          */
-        void set(uint8_t red = 0, uint8_t green = 0, uint8_t blue = 0);
+        XLDateTime& operator=(const std::tm& timepoint);
 
         /**
-         * @brief
-         * @param hexCode
+         * @brief Implicit conversion to Excel date/time serial number (any floating point type).
+         * @tparam T Type to convert to (any floating point type).
+         * @return Excel date/time serial number.
          */
-        void set(const std::string& hexCode);
+        template<typename T,
+                 typename std::enable_if<std::is_floating_point_v<T> >::type* = nullptr>
+        operator T() const // NOLINT
+        {
+            return serial();
+        }
 
         /**
-         * @brief
-         * @return
+         * @brief Implicit conversion to std::tm object.
+         * @return std::tm object.
          */
-        uint8_t alpha() const;
+        operator std::tm() const; // NOLINT
 
         /**
-         * @brief
-         * @return
+         * @brief Get the date/time in the form of an Excel date/time serial number.
+         * @return A double with the serial number.
          */
-        uint8_t red() const;
+        double serial() const;
 
         /**
-         * @brief
-         * @return
+         * @brief Get the date/time in the form of a std::tm struct.
+         * @return A std::tm struct with the time point.
          */
-        uint8_t green() const;
-
-        /**
-         * @brief
-         * @return
-         */
-        uint8_t blue() const;
-
-        /**
-         * @brief
-         * @return
-         */
-        std::string hex() const;
-
-        //----------------------------------------------------------------------------------------------------------------------
-        //           Private Member Variables
-        //----------------------------------------------------------------------------------------------------------------------
+        std::tm tm() const;
 
     private:
-        uint8_t m_alpha { 255 };
+        double m_serial {1.0}; /**<  */
 
-        uint8_t m_red { 0 };
 
-        uint8_t m_green { 0 };
-
-        uint8_t m_blue { 0 };
     };
+} // namespace OpenXLSX
 
-}    // namespace OpenXLSX
-
-#pragma warning(pop)
-#endif    // OPENXLSX_XLCOLOR_HPP
+#endif    // OPENXLSX_XLDATETIME_HPP

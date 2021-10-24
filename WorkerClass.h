@@ -6,6 +6,7 @@ class Worker
 {
 public:
 	wstring EENameFull{};
+	wstring EEDepartment{};
 	wstring EENameLast{};
 	wstring EEEmailWork{};
 	wstring EEEmailHome{};
@@ -14,6 +15,61 @@ public:
 };
 
 vector<Worker*> g_WorkerArray;
+
+
+
+
+/// ////////////////////VACATIONS
+
+
+
+
+class Dates
+{
+public:
+	int iDateFrom = -1;
+	int iDateTo = -1;
+};
+
+
+
+class Vacation
+{
+public:
+	int iWorkerID = -1;
+	int iOrderDate = -1;
+	vector<Dates*> VacDates;
+	int iOnSchedule = -1;
+	vector<Dates*> VacDatesAdded;
+	int iTransferred = -1;
+	vector<Dates*> VacDatesTransferFrom;
+};
+
+
+
+class WorkerVac
+{
+public:
+	int iID = -1;
+	wstring EENameFull{}; 
+};
+
+vector<WorkerVac*> g_WorkerVacArray;
+vector<Vacation*> g_VacationsArray;
+
+
+wstring f_WorkerVacNameFromID(int iID)
+{
+	for (std::vector<WorkerVac*>::iterator it = g_WorkerVacArray.begin(); it != g_WorkerVacArray.end(); ++it)
+	{
+		if (Iter->iID == iID)
+		{
+			return  (Iter->EENameFull);
+		}
+	}
+	
+	return (L"EE not found");
+}
 
 
 

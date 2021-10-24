@@ -104,81 +104,131 @@ void MyFrame::OnMailMergeButtonPressed(wxCommandEvent& WXUNUSED(event))
         }
     }
 
+    //if g_MailMerge_SendOnlyOneLetter
 
 
 
-    while (iPos < iCount)
+
+    if (g_MailMerge_SendOnlyOneLetter)
     {
-        iValue = CheckedItems[iPos];
+        wstring w_OneLetterEmailWork{};
+        wstring w_OneLetterEmailHome{};
 
-        for (std::vector<Worker*>::iterator it = g_WorkerArray.begin(); it != g_WorkerArray.end(); ++it)
+        wAttachements.clear();
+        wAttachements.insert(std::end(wAttachements), std::begin(wAttachementsChecked), std::end(wAttachementsChecked));
+
+
+        w_LetterBody = m_MailMerge_Text_LetterBody->GetValue();
+        w_LetterSubject = m_MailMerge_Text_LetterSubject->GetValue();
+
+        while (iPos < iCount)
         {
-            m_text->AppendText(L"\nComparing::" + Frame_Main->m_EEList->GetString(iValue) + L" with " + Iter->EENameFull);
+            iValue = CheckedItems[iPos];
 
-            temp_text = Frame_Main->m_EEList->GetString(iValue);
-            if (boost::iequals(temp_text, Iter->EENameFull))
+            for (std::vector<Worker*>::iterator it = g_WorkerArray.begin(); it != g_WorkerArray.end(); ++it)
             {
-                m_text->AppendText(L"\nSENDING");
-                w_LetterBody = m_MailMerge_Text_LetterBody->GetValue();
-                w_LetterSubject = m_MailMerge_Text_LetterSubject->GetValue();
-
-                wAttachements.clear();
-                wToRemove.clear();
-                wAttachements.insert(std::end(wAttachements), std::begin(wAttachementsChecked), std::end(wAttachementsChecked));
-
-
-                if (g_MailMerge_LookforAttachments)
+                temp_text = Frame_Main->m_EEList->GetString(iValue);
+                if (boost::iequals(temp_text, Iter->EENameFull))
                 {
-                    if (iAttacmentFolderExists)
+                    if (Iter->EEEmailWork.length() > 0)
                     {
-                        for (auto const& dir_entry : std::filesystem::directory_iterator{ g_MailMergeAttachmentFolderPath })
-                        {
-                            if (boost::icontains(dir_entry.path().filename().c_str(), Iter->EENameFull))
-                                wAttachements.push_back(dir_entry.path());
-                        }
+                        w_OneLetterEmailWork += Iter->EEEmailWork + ";";
                     }
-                }
-
-                f_MailMerge_ReplaceFields(&w_LetterBody, &w_LetterSubject, Iter);
-
-                if (iAttacmentFolderExists)
-                {
-
-                    boost::wregex expression(L"<вложить>([^<]*)</вложить>");
-
-                    boost::regex_token_iterator<std::wstring::iterator> w_it{ w_LetterBody.begin(), w_LetterBody.end(),expression, 1 };
-                    boost::regex_token_iterator<std::wstring::iterator> end;
-                    while (w_it != end)
+                    if (Iter->EEEmailHome.length() > 0)
                     {
-                        w_attachment_temp = (*w_it).str();
-                        for (auto const& dir_entry : std::filesystem::directory_iterator{ g_MailMergeAttachmentFolderPath })
-                        {
-                            if (boost::icontains(dir_entry.path().filename().c_str(), w_attachment_temp))
-                            {
-                                wAttachements.push_back(dir_entry.path());
-                            }
-                        }
-
-                        w_attachment_temp = L"<вложить>" + std::move(w_attachment_temp) + L"</вложить>";
-                        wToRemove.push_back(w_attachment_temp);
-                        w_it++;
-                    }
-
-                    for (std::vector<wstring>::iterator it_W_Remove = wToRemove.begin(); it_W_Remove != wToRemove.end(); ++it_W_Remove)
-                    {
-                        boost::ireplace_all(w_LetterBody, (*it_W_Remove), L"");
+                        w_OneLetterEmailHome += Iter->EEEmailHome + ";";
                     }
 
                 }
 
-                f_MailMerge_Sent_Letter(w_LetterSubject, Iter->EEEmailWork, Iter->EEEmailHome, w_LetterBody, wAttachements);
-                break;
             }
 
+
+            iPos++;
         }
 
 
-        iPos++;
+
+
+        f_MailMerge_Sent_Letter(w_LetterSubject, w_OneLetterEmailWork, w_OneLetterEmailHome, w_LetterBody, wAttachements);
+
+    }
+    else
+    {
+        while (iPos < iCount)
+        {
+            iValue = CheckedItems[iPos];
+
+            for (std::vector<Worker*>::iterator it = g_WorkerArray.begin(); it != g_WorkerArray.end(); ++it)
+            {
+                m_text->AppendText(L"\nComparing::" + Frame_Main->m_EEList->GetString(iValue) + L" with " + Iter->EENameFull);
+
+                temp_text = Frame_Main->m_EEList->GetString(iValue);
+                if (boost::iequals(temp_text, Iter->EENameFull))
+                {
+                    m_text->AppendText(L"\nSENDING");
+                    w_LetterBody = m_MailMerge_Text_LetterBody->GetValue();
+                    w_LetterSubject = m_MailMerge_Text_LetterSubject->GetValue();
+
+                    wAttachements.clear();
+                    wToRemove.clear();
+                    wAttachements.insert(std::end(wAttachements), std::begin(wAttachementsChecked), std::end(wAttachementsChecked));
+
+
+                    if (g_MailMerge_LookforAttachments)
+                    {
+                        if (iAttacmentFolderExists)
+                        {
+                            for (auto const& dir_entry : std::filesystem::directory_iterator{ g_MailMergeAttachmentFolderPath })
+                            {
+                                if (boost::icontains(dir_entry.path().filename().c_str(), Iter->EENameFull))
+                                    wAttachements.push_back(dir_entry.path());
+                            }
+                        }
+                    }
+
+                    f_MailMerge_ReplaceFields(&w_LetterBody, &w_LetterSubject, Iter);
+
+                    if (iAttacmentFolderExists)
+                    {
+
+                        boost::wregex expression(L"<вложить>([^<]*)</вложить>");
+
+                        boost::regex_token_iterator<std::wstring::iterator> w_it{ w_LetterBody.begin(), w_LetterBody.end(),expression, 1 };
+                        boost::regex_token_iterator<std::wstring::iterator> end;
+                        while (w_it != end)
+                        {
+                            w_attachment_temp = (*w_it).str();
+                            for (auto const& dir_entry : std::filesystem::directory_iterator{ g_MailMergeAttachmentFolderPath })
+                            {
+                                if (boost::icontains(dir_entry.path().filename().c_str(), w_attachment_temp))
+                                {
+                                    wAttachements.push_back(dir_entry.path());
+                                }
+                            }
+
+                            w_attachment_temp = L"<вложить>" + std::move(w_attachment_temp) + L"</вложить>";
+                            wToRemove.push_back(w_attachment_temp);
+                            w_it++;
+                        }
+
+                        for (std::vector<wstring>::iterator it_W_Remove = wToRemove.begin(); it_W_Remove != wToRemove.end(); ++it_W_Remove)
+                        {
+                            boost::ireplace_all(w_LetterBody, (*it_W_Remove), L"");
+                        }
+
+                    }
+
+                    f_MailMerge_Sent_Letter(w_LetterSubject, Iter->EEEmailWork, Iter->EEEmailHome, w_LetterBody, wAttachements);
+                    break;
+                }
+
+            }
+
+
+            iPos++;
+        }
+
     }
 
     f_SetBusy(0);

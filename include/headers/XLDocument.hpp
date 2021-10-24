@@ -206,8 +206,6 @@ namespace OpenXLSX
          */
         XLWorkbook workbook() const;
 
-        void resetCalcChain();
-
         /**
          * @brief Get the requested document property.
          * @param prop The name of the property to get.
@@ -243,7 +241,7 @@ namespace OpenXLSX
         {
             if constexpr (std::is_same_v<Command, XLCommandSetSheetName>) {
                 m_appProperties.setSheetName(command.sheetName(), command.newName());
-                m_workbook.setSheetName(command.sheetID(), command.sheetName());
+                m_workbook.setSheetName(command.sheetID(), command.newName());
             }
 
             else if constexpr (std::is_same_v<Command, XLCommandSetSheetVisibility>) {    // NOLINT
@@ -413,7 +411,7 @@ namespace OpenXLSX
 
             // TODO: This requires m_sharedStrings to be mutable. Is there a way around that?
             else if constexpr (std::is_same_v<Query, XLQuerySharedStrings>) {
-                query.setSharedStrings(&m_sharedStrings);
+                query.setSharedStrings(m_sharedStrings);
                 return query;
             }
 
@@ -502,21 +500,30 @@ namespace OpenXLSX
          */
         const XLXmlData* getXmlData(const std::string& path) const;
 
+        /**
+         * @brief
+         * @param path
+         * @return
+         */
+        bool hasXmlData(const std::string& path) const;
+
         //----------------------------------------------------------------------------------------------------------------------
         //           Private Member Variables
         //----------------------------------------------------------------------------------------------------------------------
 
     private:
-        std::string                  m_filePath {}; /**< The path to the original file*/
-        std::string                  m_realPath {}; /**<  */
-        mutable std::list<XLXmlData> m_data {};     /**<  */
+        std::string m_filePath {}; /**< The path to the original file*/
+        std::string m_realPath {}; /**<  */
+
+        mutable std::list<XLXmlData>    m_data {};              /**<  */
+        mutable std::deque<std::string> m_sharedStringCache {}; /**<  */
+        mutable XLSharedStrings         m_sharedStrings {};     /**<  */
 
         XLRelationships m_docRelationships {}; /**< A pointer to the document relationships object*/
         XLRelationships m_wbkRelationships {}; /**< A pointer to the document relationships object*/
         XLContentTypes  m_contentTypes {};     /**< A pointer to the content types object*/
         XLAppProperties m_appProperties {};    /**< A pointer to the App properties object */
         XLProperties    m_coreProperties {};   /**< A pointer to the Core properties object*/
-        mutable XLSharedStrings m_sharedStrings {};    /**<  */
         XLWorkbook      m_workbook {};         /**< A pointer to the workbook object */
         XLZipArchive    m_archive {};          /**<  */
     };

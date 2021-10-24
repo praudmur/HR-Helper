@@ -140,7 +140,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>lib\vc_x64_lib\wxbase31u.lib;lib\vc_x64_lib\wxmsw31u_core.lib;lib\vc_x64_lib\wxregexu.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;winspool.lib;winmm.lib;shell32.lib;shlwapi.lib;comctl32.lib;ole32.lib;oleaut32.lib;uuid.lib;rpcrt4.lib;advapi32.lib;version.lib;wsock32.lib;wininet.lib;oleacc.lib;uxtheme.lib;lib\vc_x64_lib\wxpng.lib;lib\vc_x64_lib\wxtiff.lib;lib\vc_x64_lib\wxzlib.lib;lib\vc_x64_lib\wxjpeg.lib;lib\OpenXLSX-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>lib\vc_x64_lib\wxbase31u.lib;lib\vc_x64_lib\wxmsw31u_core.lib;lib\vc_x64_lib\wxregexu.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;winspool.lib;winmm.lib;shell32.lib;shlwapi.lib;comctl32.lib;ole32.lib;oleaut32.lib;uuid.lib;rpcrt4.lib;advapi32.lib;version.lib;wsock32.lib;wininet.lib;oleacc.lib;uxtheme.lib;lib\vc_x64_lib\wxpng.lib;lib\vc_x64_lib\wxtiff.lib;lib\vc_x64_lib\wxzlib.lib;lib\vc_x64_lib\wxjpeg.lib;lib\OpenXLSX.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)lib;D:\VSProjects\boost_1_77_0\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -160,17 +160,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="uiaction.cpp" />
-    <ResourceCompile Include="G:\Other downloads\wxWidgets-3.1.5\samples\sample.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExcelWork.h" />
+    <ClInclude Include="OnProgramStart.h" />
     <ClInclude Include="p_Backup.h" />
     <ClInclude Include="OpenFileDialog.h" />
     <ClInclude Include="p_CreateElements.h" />
     <ClInclude Include="p_MailMerge.h" />
     <ClInclude Include="p_Reestr.h" />
+    <ClInclude Include="p_VacSchedule.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SimpleIni.h" />
     <ClInclude Include="WorkerClass.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="HRHelper.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

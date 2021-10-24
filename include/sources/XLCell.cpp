@@ -49,13 +49,18 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 // ===== OpenXLSX Includes ===== //
 #include "XLCell.hpp"
 #include "XLCellRange.hpp"
+#include "utilities/XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
 /**
  * @details
  */
-XLCell::XLCell() : m_cellNode(nullptr), m_sharedStrings(nullptr), m_valueProxy(XLCellValueProxy(this, m_cellNode.get())) {}
+XLCell::XLCell()
+    : m_cellNode(nullptr),
+      m_valueProxy(XLCellValueProxy(this, m_cellNode.get())),
+      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get()))
+{}
 
 /**
  * @details This constructor creates a XLCell object based on the cell XMLNode input parameter, and is
@@ -63,10 +68,11 @@ XLCell::XLCell() : m_cellNode(nullptr), m_sharedStrings(nullptr), m_valueProxy(X
  * If a cell XMLNode does not exist (i.e., the cell is empty), use the relevant constructor to create an XLCell
  * from a XLCellReference parameter.
  */
-XLCell::XLCell(const XMLNode& cellNode, XLSharedStrings* sharedStrings)
+XLCell::XLCell(const XMLNode& cellNode, const XLSharedStrings& sharedStrings)
     : m_cellNode(std::make_unique<XMLNode>(cellNode)),
       m_sharedStrings(sharedStrings),
-      m_valueProxy(XLCellValueProxy(this, m_cellNode.get()))
+      m_valueProxy(XLCellValueProxy(this, m_cellNode.get())),
+      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get()))
 {}
 
 /**
@@ -75,7 +81,8 @@ XLCell::XLCell(const XMLNode& cellNode, XLSharedStrings* sharedStrings)
 XLCell::XLCell(const XLCell& other)
     : m_cellNode(other.m_cellNode ? std::make_unique<XMLNode>(*other.m_cellNode) : nullptr),
       m_sharedStrings(other.m_sharedStrings),
-      m_valueProxy(XLCellValueProxy(this, m_cellNode.get()))
+      m_valueProxy(XLCellValueProxy(this, m_cellNode.get())),
+      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get()))
 {}
 
 /**
@@ -83,8 +90,9 @@ XLCell::XLCell(const XLCell& other)
  */
 XLCell::XLCell(XLCell&& other) noexcept
     : m_cellNode(std::move(other.m_cellNode)),
-      m_sharedStrings(other.m_sharedStrings),
-      m_valueProxy(XLCellValueProxy(this, m_cellNode.get()))
+      m_sharedStrings(std::move(other.m_sharedStrings)),
+      m_valueProxy(XLCellValueProxy(this, m_cellNode.get())),
+      m_formulaProxy(XLFormulaProxy(this, m_cellNode.get()))
 {}
 
 /**
@@ -98,9 +106,8 @@ XLCell::~XLCell() = default;
 XLCell& XLCell::operator=(const XLCell& other)
 {
     if (&other != this) {
-        m_cellNode      = other.m_cellNode ? std::make_unique<XMLNode>(*other.m_cellNode) : nullptr;
-        m_sharedStrings = other.m_sharedStrings;
-        m_valueProxy    = XLCellValueProxy(this, m_cellNode.get());
+        XLCell temp = other;
+        std::swap(*this, temp);
     }
 
     return *this;
@@ -121,27 +128,6 @@ XLCell& XLCell::operator=(XLCell&& other) noexcept
 }
 
 /**
- * @details This methods copies a range into a new location, with the top left cell being located in the target cell.
- * The copying is done in the following way:
- * - Define a range with the top left cell being the target cell.
- * - Calculate the size of the range from the originating range and set the new range to the same size.
- * - Copy the contents of the original range to the new range.
- * - Return a reference to the first cell in the new range.
- * @pre
- * @post
- * @todo Consider what happens if the target range extends beyond the maximum spreadsheet limits
- */
-XLCell& XLCell::operator=(const XLCellRange& range)
-{
-    auto            first = cellReference();
-    XLCellReference last(first.row() + range.numRows() - 1, first.column() + range.numColumns() - 1);
-    XLCellRange     rng(m_cellNode->parent().parent(), first, last, nullptr);
-    rng = range;
-
-    return *this;
-}
-
-/**
  * @details
  */
 XLCell::operator bool() const
@@ -154,7 +140,20 @@ XLCell::operator bool() const
  */
 XLCellReference XLCell::cellReference() const
 {
-    return XLCellReference(m_cellNode->attribute("r").value());
+    if (!*this) throw XLInternalError("XLCell object has not been properly initiated.");
+    return XLCellReference{m_cellNode->attribute("r").value()};
+}
+
+/**
+ * @details This function returns a const reference to the cell reference by the offset from the current one.
+ */
+XLCell XLCell::offset(uint16_t rowOffset, uint16_t colOffset) const
+{
+    if (!*this) throw XLInternalError("XLCell object has not been properly initiated.");
+    XLCellReference offsetRef(cellReference().row() + rowOffset, cellReference().column() + colOffset);
+    auto            rownode  = getRowNode(m_cellNode->parent().parent(), offsetRef.row());
+    auto            cellnode = getCellNode(rownode, offsetRef.column());
+    return XLCell{cellnode, m_sharedStrings};
 }
 
 /**
@@ -162,34 +161,35 @@ XLCellReference XLCell::cellReference() const
  */
 bool XLCell::hasFormula() const
 {
+    if (!*this) return false;
     return m_cellNode->child("f") != nullptr;
 }
 
 /**
  * @details
  */
-std::string XLCell::formula() const
+XLFormulaProxy& XLCell::formula()
 {
-    return m_cellNode->child("f").text().get();
+    if (!*this) throw XLInternalError("XLCell object has not been properly initiated.");
+    return m_formulaProxy;
 }
 
 /**
  * @details
- * @pre
- * @post
  */
-void XLCell::setFormula(const std::string& newFormula)
+const XLFormulaProxy& XLCell::formula() const
 {
-    m_cellNode->child("f").text().set(newFormula.c_str());
+    if (!*this) throw XLInternalError("XLCell object has not been properly initiated.");
+    return m_formulaProxy;
 }
 
 /**
- * @details
  * @pre
  * @post
  */
 XLCellValueProxy& XLCell::value()
 {
+    if (!*this) throw XLInternalError("XLCell object has not been properly initiated.");
     return m_valueProxy;
 }
 
@@ -200,5 +200,16 @@ XLCellValueProxy& XLCell::value()
  */
 const XLCellValueProxy& XLCell::value() const
 {
+    if (!*this) throw XLInternalError("XLCell object has not been properly initiated.");
     return m_valueProxy;
+}
+
+/**
+ * @details
+ * @pre
+ * @post
+ */
+bool XLCell::isEqual(const XLCell& lhs, const XLCell& rhs)
+{
+    return *lhs.m_cellNode == *rhs.m_cellNode;
 }

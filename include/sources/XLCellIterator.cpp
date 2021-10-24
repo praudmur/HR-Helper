@@ -67,7 +67,6 @@ XLCellIterator::XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation 
     : m_dataNode(std::make_unique<XMLNode>(*cellRange.m_dataNode)),
       m_topLeft(cellRange.m_topLeft),
       m_bottomRight(cellRange.m_bottomRight),
-      m_currentCell(),
       m_sharedStrings(cellRange.m_sharedStrings)
 {
     if (loc == XLIteratorLocation::End)
@@ -77,6 +76,9 @@ XLCellIterator::XLCellIterator(const XLCellRange& cellRange, XLIteratorLocation 
     }
 }
 
+/**
+ * @details
+ */
 XLCellIterator::~XLCellIterator() = default;
 
 /**
@@ -90,6 +92,9 @@ XLCellIterator::XLCellIterator(const XLCellIterator& other)
       m_sharedStrings(other.m_sharedStrings)
 {}
 
+/**
+ * @details
+ */
 XLCellIterator::XLCellIterator(XLCellIterator&& other) noexcept = default;
 
 /**
@@ -123,10 +128,12 @@ XLCellIterator& XLCellIterator::operator++()
     // ===== Determine the cell reference for the next cell.
     if (ref.column() < m_bottomRight.column())
         ref = XLCellReference(ref.row(), ref.column() + 1);
-    else if (ref.column() == m_bottomRight.column())
+    else if (ref == m_bottomRight)
+        m_endReached = true;
+    else
         ref = XLCellReference(ref.row() + 1, m_topLeft.column());
 
-    if (ref > m_bottomRight)
+    if (m_endReached)
         m_currentCell = XLCell();
     else if (ref > m_bottomRight || ref.row() == m_currentCell.cellReference().row()) {
         auto node = m_currentCell.m_cellNode->next_sibling();
@@ -181,17 +188,21 @@ XLCellIterator::pointer XLCellIterator::operator->()
 /**
  * @details
  */
-bool XLCellIterator::operator==(const XLCellIterator& rhs)
+bool XLCellIterator::operator==(const XLCellIterator& rhs) const
 {
+    if (m_currentCell && !rhs.m_currentCell)
+        return false;
+    if (!m_currentCell && !rhs.m_currentCell)
+        return true;
     return m_currentCell == rhs.m_currentCell;
 }
 
 /**
  * @details
  */
-bool XLCellIterator::operator!=(const XLCellIterator& rhs)
+bool XLCellIterator::operator!=(const XLCellIterator& rhs) const
 {
-    return !(m_currentCell == rhs.m_currentCell);
+    return !(*this == rhs);
 }
 
 /**

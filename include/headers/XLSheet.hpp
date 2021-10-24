@@ -75,15 +75,18 @@ namespace OpenXLSX
     enum class XLSheetState { Visible, Hidden, VeryHidden };
 
     /**
-     * @brief
-     * @tparam T
+     * @brief The XLSheetBase class is the base class for the XLWorksheet and XLChartsheet classes. However,
+     * it is not a base class in the traditional sense. Rather, it provides common functionality that is
+     * inherited via the CRTP (Curiously Recurring Template Pattern) pattern.
+     * @tparam T Type that will inherit functionality. Restricted to types XLWorksheet and XLChartsheet.
      */
-    template<typename T>
+    template<typename T,
+             typename std::enable_if<std::is_same_v<T, XLWorksheet> || std::is_same_v<T, XLChartsheet>>::type* = nullptr>
     class OPENXLSX_EXPORT XLSheetBase : public XLXmlFile
     {
     public:
         /**
-         * @brief
+         * @brief Constructor
          */
         XLSheetBase() : XLXmlFile(nullptr) {};
 
@@ -177,6 +180,7 @@ namespace OpenXLSX
         /**
          * @brief
          * @return
+         * @todo To be implemented.
          */
         XLColor color() const
         {
@@ -318,14 +322,14 @@ namespace OpenXLSX
          * @param ref
          * @return
          */
-        XLCell cell(const std::string& ref);
+        XLCell cell(const std::string& ref) const;
 
         /**
          * @brief Get a pointer to the XLCell object for the given cell reference.
          * @param ref An XLCellReference object with the address of the cell to get.
          * @return A const reference to the requested XLCell object.
          */
-        XLCell cell(const XLCellReference& ref);
+        XLCell cell(const XLCellReference& ref) const;
 
         /**
          * @brief Get the cell at the given coordinates.
@@ -333,13 +337,13 @@ namespace OpenXLSX
          * @param columnNumber The column number (index base 1).
          * @return A reference to the XLCell object at the given coordinates.
          */
-        XLCell cell(uint32_t rowNumber, uint16_t columnNumber);
+        XLCell cell(uint32_t rowNumber, uint16_t columnNumber) const;
 
         /**
          * @brief Get a range for the area currently in use (i.e. from cell A1 to the last cell being in use).
          * @return A const XLCellRange object with the entire range.
          */
-        XLCellRange range();
+        XLCellRange range() const;
 
         /**
          * @brief Get a range with the given coordinates.
@@ -347,12 +351,27 @@ namespace OpenXLSX
          * @param bottomRight An XLCellReference object with the coordinates to the bottom right cell.
          * @return A const XLCellRange object with the requested range.
          */
-        XLCellRange range(const XLCellReference& topLeft, const XLCellReference& bottomRight);
+        XLCellRange range(const XLCellReference& topLeft, const XLCellReference& bottomRight) const;
 
+        /**
+         * @brief
+         * @return
+         */
         XLRowRange rows() const;
 
+        /**
+         * @brief
+         * @param rowCount
+         * @return
+         */
         XLRowRange rows(uint32_t rowCount) const;
 
+        /**
+         * @brief 
+         * @param firstRow
+         * @param lastRow
+         * @return
+         */
         XLRowRange rows(uint32_t firstRow, uint32_t lastRow) const;
 
         /**
@@ -360,7 +379,7 @@ namespace OpenXLSX
          * @param rowNumber The number of the row to retrieve.
          * @return A pointer to the XLRow object.
          */
-        XLRow row(uint32_t rowNumber);
+        XLRow row(uint32_t rowNumber) const;
 
         /**
          * @brief Get the column with the given column number.
@@ -399,7 +418,7 @@ namespace OpenXLSX
          * @brief
          * @param color
          */
-        void setColor_impl(XLColor color);
+        void setColor_impl(const XLColor& color);
 
         /**
          * @brief
@@ -473,7 +492,7 @@ namespace OpenXLSX
          * @brief
          * @param color
          */
-        void setColor_impl(XLColor color);
+        void setColor_impl(const XLColor& color);
 
         /**
          * @brief
@@ -555,7 +574,7 @@ namespace OpenXLSX
          * @brief
          * @return
          */
-        XLColor color();
+        XLColor color() const;
 
         /**
          * @brief
@@ -596,7 +615,8 @@ namespace OpenXLSX
          * @brief Method to get the type of the sheet.
          * @return An XLSheetType enum object with the sheet type.
          */
-        template<typename SheetType>
+        template<typename SheetType,
+            typename std::enable_if<std::is_same_v<SheetType, XLWorksheet> || std::is_same_v<SheetType, XLChartsheet>>::type* = nullptr>
         bool isType() const
         {
             return std::holds_alternative<SheetType>(m_sheet);
@@ -615,17 +635,34 @@ namespace OpenXLSX
          * @tparam T
          * @return
          */
-        template<typename T>
-        T get()
+        template<typename T,
+                 typename std::enable_if<std::is_same_v<T, XLWorksheet> || std::is_same_v<T, XLChartsheet>>::type* = nullptr>
+        T get() const
         {
-            static_assert(std::is_same_v<T, XLWorksheet> || std::is_same_v<T, XLChartsheet>, "Invalid sheet type.");
+            try {
+                if constexpr (std::is_same<T, XLWorksheet>::value)
+                    return std::get<XLWorksheet>(m_sheet);
 
-            if constexpr (std::is_same<T, XLWorksheet>::value)
-                return std::get<XLWorksheet>(m_sheet);
+                else if constexpr (std::is_same<T, XLChartsheet>::value)
+                    return std::get<XLChartsheet>(m_sheet);
+            }
 
-            else if constexpr (std::is_same<T, XLChartsheet>::value)
-                return std::get<XLChartsheet>(m_sheet);
+            catch (const std::bad_variant_access&) {
+                throw XLSheetError("XLSheet object does not contain the requested sheet type.");
+            }
         }
+
+        /**
+         * @brief
+         * @return
+         */
+        operator XLWorksheet() const; // NOLINT
+
+        /**
+         * @brief
+         * @return
+         */
+        operator XLChartsheet() const; // NOLINT
 
         //----------------------------------------------------------------------------------------------------------------------
         //           Private Member Variables

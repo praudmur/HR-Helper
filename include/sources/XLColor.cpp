@@ -56,6 +56,11 @@ using namespace OpenXLSX;
 /**
  * @details
  */
+XLColor::XLColor() = default;
+
+/**
+ * @details
+ */
 XLColor::XLColor(uint8_t alpha, uint8_t red, uint8_t green, uint8_t blue) : m_alpha(alpha), m_red(red), m_green(green), m_blue(blue) {}
 
 /**
@@ -66,7 +71,7 @@ XLColor::XLColor(uint8_t red, uint8_t green, uint8_t blue) : m_red(red), m_green
 /**
  * @details
  */
-XLColor::XLColor(const std::string& hexCode) : m_red(0), m_green(0), m_blue(0)
+XLColor::XLColor(const std::string& hexCode)
 {
     set(hexCode);
 }
@@ -74,7 +79,27 @@ XLColor::XLColor(const std::string& hexCode) : m_red(0), m_green(0), m_blue(0)
 /**
  * @details
  */
+XLColor::XLColor(const XLColor& other) = default;
+
+/**
+ * @details
+ */
+XLColor::XLColor(XLColor&& other) noexcept = default;
+
+/**
+ * @details
+ */
 XLColor::~XLColor() = default;
+
+/**
+ * @details
+ */
+XLColor& XLColor::operator=(const XLColor& other) = default;
+
+/**
+ * @details
+ */
+XLColor& XLColor::operator=(XLColor&& other) noexcept = default;
 
 /**
  * @details
@@ -102,17 +127,37 @@ void XLColor::set(uint8_t red, uint8_t green, uint8_t blue)
  */
 void XLColor::set(const std::string& hexCode)
 {
-    if (hexCode.size() > 8) throw XLInputError("Invalid color code");
+    std::string alpha;
+    std::string red;
+    std::string green;
+    std::string blue;
 
-    std::string alpha = hexCode.substr(0, 2);
-    std::string red   = hexCode.substr(2, 2);
-    std::string green = hexCode.substr(4, 2);
-    std::string blue  = hexCode.substr(6, 2);
+    auto temp = hex();
 
-    m_alpha = static_cast<uint8_t>(stoul(alpha, nullptr, 16));
-    m_red   = static_cast<uint8_t>(stoul(red, nullptr, 16));
-    m_green = static_cast<uint8_t>(stoul(green, nullptr, 16));
-    m_blue  = static_cast<uint8_t>(stoul(blue, nullptr, 16));
+    const int hexCodeSizeWithoutAlpha = 6;
+    const int hexCodeSizeWithAlpha = 8;
+
+    if (hexCode.size() == hexCodeSizeWithoutAlpha) {
+        alpha = hex().substr(0, 2);
+        red   = hexCode.substr(0, 2);
+        green = hexCode.substr(2, 2);
+        blue  = hexCode.substr(4, 2);
+    }
+
+    else if (hexCode.size() == hexCodeSizeWithAlpha) {
+        alpha = hexCode.substr(0, 2);
+        red   = hexCode.substr(2, 2);
+        green = hexCode.substr(4, 2);
+        blue  = hexCode.substr(6, 2); //NOLINT
+    }
+    else
+        throw XLInputError("Invalid color code");
+
+    const int hexBase = 16;
+    m_alpha = static_cast<uint8_t>(stoul(alpha, nullptr, hexBase));
+    m_red   = static_cast<uint8_t>(stoul(red, nullptr, hexBase));
+    m_green = static_cast<uint8_t>(stoul(green, nullptr, hexBase));
+    m_blue  = static_cast<uint8_t>(stoul(blue, nullptr, hexBase));
 }
 
 /**
@@ -153,17 +198,18 @@ uint8_t XLColor::blue() const
 std::string XLColor::hex() const
 {
     std::stringstream str;
+    const int hexBase = 16;
 
-    if (m_alpha < 16) str << "0";
+    if (m_alpha < hexBase) str << "0";
     str << std::hex << static_cast<int>(m_alpha);
 
-    if (m_red < 16) str << "0";
+    if (m_red < hexBase) str << "0";
     str << std::hex << static_cast<int>(m_red);
 
-    if (m_green < 16) str << "0";
+    if (m_green < hexBase) str << "0";
     str << std::hex << static_cast<int>(m_green);
 
-    if (m_blue < 16) str << "0";
+    if (m_blue < hexBase) str << "0";
     str << std::hex << static_cast<int>(m_blue);
 
     return (str.str());

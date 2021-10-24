@@ -1,6 +1,34 @@
 
 
+void f_Clear_File(int iRequest)
+{
+    if (iRequest == t_File_MailMerge_AttachmentFolder)
+    {
+        g_MailMergeAttachmentFolderPath = L"No_File";
+        f_SetINIValue("Settings", "bLoadMailMergeAttachmentFolderPath", L"No_File");
+        Frame_Main->m_MailMerge_Status_AttachmentFolderPath->SetLabelText("Папка вложений не указана");
+        Frame_Main->m_MailMerge_Status_AttachmentFolderPath->SetBackgroundColour(*wxYELLOW);
 
+    }
+    else if (iRequest == t_File_Backup_Folder)
+    {
+        g_BackupFolderPath = L"No_File";
+        f_SetINIValue("Settings", "bLoadBackupFolderPath", L"No_File");
+        Frame_Main->m_Backup_Status_BackupFolderPath->SetLabelText("Папка резервной копии не указана");
+        Frame_Main->m_Backup_Status_BackupFolderPath->SetBackgroundColour(*wxYELLOW);
+
+    }
+    else if (iRequest == t_File_Backup_FolderAlt)
+    {
+        g_BackupFolderPathAlt = L"No_File";
+        f_SetINIValue("Settings", "bLoadBackupFolderPathAlt", L"No_File");
+        Frame_Main->m_Backup_Status_BackupFolderPathAlt->SetLabelText("Прямая папка резервной копии не указана");
+        Frame_Main->m_Backup_Status_BackupFolderPathAlt->SetBackgroundColour(*wxYELLOW);
+
+    }
+
+
+}
 
 
 
@@ -88,9 +116,14 @@ void f_Open_File(int iRequest, wstring w_FilePath, bool bFromINI)
         wxArrayString items;
         Frame_Main->m_Backup_ListBoxFiles->GetStrings(items);
         items.Add(w_FilePath);
+
+
         Frame_Main->m_Backup_ListBoxFiles->SetStrings(items);
 
-    }else if (iRequest == t_File_Backup_Folder)
+
+
+    }
+    else if (iRequest == t_File_Backup_Folder)
     {
 
         g_BackupFolderPath = w_FilePath;
@@ -103,7 +136,19 @@ void f_Open_File(int iRequest, wstring w_FilePath, bool bFromINI)
         {
             f_SetINIValue("Settings", "bLoadBackupFolderPath", w_FilePath);
         }
+    }else if (iRequest == t_File_Backup_FolderAlt)
+    {
 
+        g_BackupFolderPathAlt = w_FilePath;
+        s_Message = "Папка прямой резервной копии>>>" + g_BackupFolderPathAlt;
+
+        Frame_Main->m_Backup_Status_BackupFolderPathAlt->SetLabelText(s_Message);
+        Frame_Main->m_Backup_Status_BackupFolderPathAlt->SetBackgroundColour(*wxGREEN);
+
+        if (!bFromINI)
+        {
+            f_SetINIValue("Settings", "bLoadBackupFolderPathAlt", w_FilePath);
+        }
     }else if (iRequest == t_File_MailMerge_EEBase)
     {
 
@@ -122,24 +167,46 @@ void f_Open_File(int iRequest, wstring w_FilePath, bool bFromINI)
     }else if (iRequest == t_File_MailMerge_AttachmentFolder)
     {
 
-        g_MailMergeAttachmentFolderPath = w_FilePath;
-        s_Message = "Папка вложений>>>" + g_MailMergeAttachmentFolderPath;
 
-        Frame_Main->m_MailMerge_Status_AttachmentFolderPath->SetLabelText(s_Message);
-        Frame_Main->m_MailMerge_Status_AttachmentFolderPath->SetBackgroundColour(*wxGREEN);
+            g_MailMergeAttachmentFolderPath = w_FilePath;
+            s_Message = "Папка вложений>>>" + g_MailMergeAttachmentFolderPath;
 
-        if (!bFromINI)
-        {
-            f_SetINIValue("Settings", "bLoadMailMergeAttachmentFolderPath", w_FilePath);
-        }
+            Frame_Main->m_MailMerge_Status_AttachmentFolderPath->SetLabelText(s_Message);
+            Frame_Main->m_MailMerge_Status_AttachmentFolderPath->SetBackgroundColour(*wxGREEN);
+
+            if (!bFromINI)
+            {
+                f_SetINIValue("Settings", "bLoadMailMergeAttachmentFolderPath", w_FilePath);
+            }
+
+
+
+
+
     }else if (iRequest == t_File_MailMerge_AttachmentFiles)
     {
         wxArrayString items;
         Frame_Main->m_MailMerge_ListBoxAttachments->GetStrings(items);
         items.Add(w_FilePath);
         Frame_Main->m_MailMerge_ListBoxAttachments->SetStrings(items);
-    }
 
+
+        //Frame_Main->m_MailMerge_ListBoxAttachments->GetListCtrl()->SetItemTextColour(0,*wxGREEN);
+
+    }
+    else if (iRequest == t_File_VacSchedule_EEBase)
+    {
+
+        g_VacScheduleEEBasePath = w_FilePath;
+        Frame_Main->m_text->AppendText(L"База работников Vac Schedule>>>" + g_VacScheduleEEBasePath);
+
+        f_VacSchedule_OpenEEBase();
+
+        if (!bFromINI)
+        {
+            f_SetINIValue("Settings", "bLoadVacScheduleBaseEEFile", w_FilePath);
+        }
+    }
 
 }
 
@@ -180,6 +247,10 @@ int WINAPI f_Open_File_Dialog(int iRequest)
         {
             pFileOpen->SetTitle(L"Выберите папку, куда нужно скопировать файлы");
         }
+        else if (iRequest == t_File_Backup_FolderAlt)
+        {
+            pFileOpen->SetTitle(L"Выберите папку, куда нужно скопировать файлы - прямая папка");
+        }
         else if (iRequest == t_File_MailMerge_EEBase)
         {
             pFileOpen->SetTitle(L"Выберите файл базы работников");
@@ -194,7 +265,7 @@ int WINAPI f_Open_File_Dialog(int iRequest)
 
 
 
-        if (iRequest <= 2 || iRequest == t_File_MailMerge_EEBase)
+        if (iRequest <= 2 || iRequest == t_File_MailMerge_EEBase || iRequest == t_File_VacSchedule_EEBase)
         {
             COMDLG_FILTERSPEC fileTypes[] =
             {
@@ -206,7 +277,7 @@ int WINAPI f_Open_File_Dialog(int iRequest)
             hr = pFileOpen->SetFileTypes(ARRAYSIZE(fileTypes), fileTypes);
 
         }
-        else if (iRequest  == t_File_Backup_Folder || iRequest == t_File_MailMerge_AttachmentFolder)
+        else if (iRequest  == t_File_Backup_Folder || iRequest == t_File_MailMerge_AttachmentFolder || iRequest == t_File_Backup_FolderAlt)
         {
             pFileOpen->SetOptions(FOS_PICKFOLDERS | FOS_PATHMUSTEXIST);
         }
@@ -236,6 +307,7 @@ int WINAPI f_Open_File_Dialog(int iRequest)
                     hr = pFileOpen->GetResults(&pRets);
 
                     if (SUCCEEDED(hr)) {
+
                         DWORD count;
                         pRets->GetCount(&count);
                         for (DWORD i = 0; i < count; i++) {
@@ -273,6 +345,9 @@ int WINAPI f_Open_File_Dialog(int iRequest)
                      pFileOpen->Release();
                 }
             }
+            else {
+                f_Clear_File(iRequest);
+            }
             CoUninitialize();
         }
     }
@@ -302,9 +377,23 @@ void f_Save_File_Dialog(int iRequest)
         hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_ALL,
             IID_IFileSaveDialog, reinterpret_cast<void**>(&pFileSave));
 
+        if (iRequest == t_File_EElist_BaseToSave)
+        {
+            COMDLG_FILTERSPEC fileTypes[] =
+            {
+                { L"Excel files", L"*.xlsx" },
+
+            };
+
+            hr = pFileSave->SetFileTypes(ARRAYSIZE(fileTypes), fileTypes);
+
+        }
+
+
 
         if (SUCCEEDED(hr))
         {
+
             // Show the Open dialog box.
             hr = pFileSave->Show(NULL);
 
@@ -325,8 +414,10 @@ void f_Save_File_Dialog(int iRequest)
                     }
 
                 }
+
                 pFileSave->Release();
             }
+
             CoUninitialize();
         }
     }

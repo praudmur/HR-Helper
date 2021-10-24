@@ -44,13 +44,16 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
  */
 
 // ===== External Includes ===== //
+#include <nowide/fstream.hpp>
 #include <pugixml.hpp>
+#if defined(_WIN32)
+#    include <random>
+#endif
 
 // ===== OpenXLSX Includes ===== //
 #include "XLContentTypes.hpp"
 #include "XLDocument.hpp"
 #include "XLSheet.hpp"
-#include "utilities/XLUtilities.hpp"
 
 using namespace OpenXLSX;
 
@@ -417,12 +420,6 @@ namespace
  * @details An alternative constructor, taking a std::string with the path to the .xlsx package as an argument.
  */
 XLDocument::XLDocument(const std::string& docPath)
-    : m_filePath(),
-      m_docRelationships(),
-      m_contentTypes(),
-      m_appProperties(),
-      m_coreProperties(),
-      m_workbook()
 {
     open(docPath);
 }
@@ -476,10 +473,25 @@ void XLDocument::open(const std::string& fileName)
                                 /* xmlType   */ item.type());
     }
 
+    for (const auto& node : getXmlData("xl/sharedStrings.xml")->getXmlDocument()->document_element().children()){
+        if (std::string(node.first_child().name()) == "r") {
+            std::string result;
+            for (const auto& elem : node.children())
+                result += elem.child("t").text().get();
+            m_sharedStringCache.emplace_back(result);
+        }
+
+        else
+            m_sharedStringCache.emplace_back(node.first_child().text().get());
+
+    }
+
+
     // ===== Open the workbook and document property items
-    m_coreProperties = XLProperties(getXmlData("docProps/core.xml"));
-    m_appProperties  = XLAppProperties(getXmlData("docProps/app.xml"));
-    m_sharedStrings  = XLSharedStrings(getXmlData("xl/sharedStrings.xml"));
+    // TODO: If property data doesn't exist, consider creating them, instead of ignoring it.
+    m_coreProperties = (hasXmlData("docProps/core.xml") ? XLProperties(getXmlData("docProps/core.xml")) : XLProperties());
+    m_appProperties  = (hasXmlData("docProps/app.xml") ? XLAppProperties(getXmlData("docProps/app.xml")) : XLAppProperties());
+    m_sharedStrings  = XLSharedStrings(getXmlData("xl/sharedStrings.xml"), &m_sharedStringCache);
     m_workbook       = XLWorkbook(getXmlData("xl/workbook.xml"));
 }
 
@@ -489,7 +501,7 @@ void XLDocument::open(const std::string& fileName)
 void XLDocument::create(const std::string& fileName)
 {
     // ===== Create a temporary output file stream.
-    auto outfile = getOutFileStream(fileName);
+    nowide::ofstream outfile(fileName, std::ios::binary);
 
     // ===== Stream the binary data for an empty workbook to the output file.
     // ===== Casting, in particular reinterpret_cast, is discouraged, but in this case it is unfortunately unavoidable.
@@ -561,10 +573,6 @@ const std::string& XLDocument::path() const
 XLWorkbook XLDocument::workbook() const
 {
     return m_workbook;
-}
-
-void XLDocument::resetCalcChain() {
-    executeCommand(XLCommandResetCalcChain());
 }
 
 /**
@@ -642,7 +650,7 @@ std::string XLDocument::property(XLProperty prop) const
  *
  * ```
  */
-void XLDocument::setProperty(XLProperty prop, const std::string& value)
+void XLDocument::setProperty(XLProperty prop, const std::string& value) // NOLINT
 {
     switch (prop) {
         case XLProperty::Application:
@@ -657,7 +665,7 @@ void XLDocument::setProperty(XLProperty prop, const std::string& value)
             }
 
             if (value.find('.') != std::string::npos) {
-                if (!value.substr(value.find('.') + 1).empty() && value.substr(value.find('.') + 1).size() <= 5) {
+                if (!value.substr(value.find('.') + 1).empty() && value.substr(value.find('.') + 1).size() <= 5) { // NOLINT
                     if (!value.substr(0, value.find('.')).empty() && value.substr(0, value.find('.')).size() <= 2) {
                         m_appProperties.setProperty("AppVersion", value);
                     }
@@ -763,7 +771,7 @@ void XLDocument::deleteProperty(XLProperty theProperty)
  */
 XLDocument::operator bool() const
 {
-    return !!m_archive;
+    return !!m_archive; // NOLINT
 }
 
 /**
@@ -771,9 +779,11 @@ XLDocument::operator bool() const
  */
 XLXmlData* XLDocument::getXmlData(const std::string& path)
 {
-    auto result = std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == path; });
-    if (result == m_data.end()) throw XLInternalError("Path does not exist in zip archive.");
-    return &*result;
+    if (!hasXmlData(path)) throw XLInternalError("Path does not exist in zip archive.");
+    return &*std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == path; });
+//    auto result = std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == path; });
+//    if (result == m_data.end()) throw XLInternalError("Path does not exist in zip archive.");
+//    return &*result;
 }
 
 /**
@@ -781,9 +791,18 @@ XLXmlData* XLDocument::getXmlData(const std::string& path)
  */
 const XLXmlData* XLDocument::getXmlData(const std::string& path) const
 {
-    auto result = std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == path; });
-    if (result == m_data.end()) throw XLInternalError("Path does not exist in zip archive.");
-    return &*result;
+    if (!hasXmlData(path)) throw XLInternalError("Path does not exist in zip archive.");
+    return &*std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == path; });
+//    if (result == m_data.end()) throw XLInternalError("Path does not exist in zip archive.");
+//    return &*result;
+}
+
+/**
+ * @details
+ */
+bool XLDocument::hasXmlData(const std::string& path) const
+{
+    return std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == path; }) != m_data.end();
 }
 
 /**

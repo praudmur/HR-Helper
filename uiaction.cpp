@@ -62,6 +62,7 @@ enum
     //Backup panel
     wx_Backup_ExecuteBackup,
     wx_Backup_AddFolder,
+    wx_Backup_AddFolderAlt,
     wx_Backup_AddFiles,
     wx_Backup_SaveFilesToINI,
     wx_Backup_ListBox,
@@ -77,12 +78,21 @@ enum
     wx_MailMerge_ListBox,
 
 
+
+    //Vac Schedule EE List
+    wx_VacSchedule_EEList,
+    wx_VacSchedule_Reestr,
+    wx_VacSchedule_Menu_OpenBase,
+    wx_VacSchedule_EEVacList,
+
+
+
     //EE list
     wx_EElist_AddEEBase,
     wx_EElist_SelectAll,
     wx_EElist_SelectNone,
     wx_EElist_CreateExampleBase,
-
+    wx_EElist_Department,
 
 
     wx_chkBox_All,
@@ -91,10 +101,12 @@ enum
     wx_SwitchPanelsDateDifference,
     wx_SwitchPanelsBackup,
     wx_SwitchPanelsMailMerge,
-    wx_SwitchPanelsEEBase,
+    wx_SwitchPanelsVacSchedule,
+
 
     wx_Global_OnKeyPress,
     wx_OnLicence,
+    wx_OnProgramWebsite,
     wx_Global_LastButton,
 
 };
@@ -110,7 +122,6 @@ public:
     virtual bool OnInit() wxOVERRIDE;
     virtual int OnExit() wxOVERRIDE;
 };
-
 
 
 
@@ -134,6 +145,7 @@ public:
 
     void OnBackupButtonPressed(wxCommandEvent& event);
     void OnBackupButtonAddFolder(wxCommandEvent& event);
+    void OnBackupButtonAddFolderAlt(wxCommandEvent& event);
     void OnBackupButtonAddFiles(wxCommandEvent& event);
     void OnBackupButtonSaveFilesToINI(wxCommandEvent& event);
 
@@ -146,15 +158,17 @@ public:
     void OnEElistSelectAll(wxCommandEvent& event);
     void OnEElistSelectNone(wxCommandEvent& event);
     void OnEElistCreateExampleBase(wxCommandEvent& event);
-
-    void OnSwitchPanelsReestr(wxCommandEvent& event);
-    void OnSwitchPanelsDateDifference(wxCommandEvent& event);
-    void OnSwitchPanelsBackup(wxCommandEvent& event);
-    void OnSwitchPanelsMailMerge(wxCommandEvent& event);
-    void OnSwitchPanelsEEBase(wxCommandEvent& event);
+    void OnEElistDepartmentSelected(wxCommandEvent& event);
 
 
-    void OnEEBaseListSelected(wxCommandEvent& event);
+    void OnSwitchPanelsButton(wxCommandEvent& event);
+
+
+
+    void OnVacScheduleOpenEEBase(wxCommandEvent& event);
+
+
+    void OnVacScheduleEEListSelected(wxCommandEvent& event);
 
 
 
@@ -166,6 +180,9 @@ public:
     void OnExit(wxCommandEvent& WXUNUSED(event)) { Close(1); }
     void OnAbout(wxCommandEvent& event);
     void OnLicence(wxCommandEvent& event);
+    void OnProgramWebsite(wxCommandEvent& event);
+
+    void OnMouseDoubleClick(wxMouseEvent& event);
 
     //Reestr buttons
     wxTextCtrl* m_text = NULL;
@@ -184,9 +201,11 @@ public:
     //Backup buttons
     wxButton* m_Backup_Button_Execute = NULL;
     wxButton* m_Backup_Button_AddFolder = NULL;
+    wxButton* m_Backup_Button_AddFolderAlt = NULL;
     wxButton* m_Backup_Button_AddFiles = NULL;
     wxButton* m_Backup_Button_SaveFilesToINI = NULL;
     wxTextCtrl* m_Backup_Status_BackupFolderPath = NULL;
+    wxTextCtrl* m_Backup_Status_BackupFolderPathAlt = NULL;
     wxCheckBox* m_Backup_Checkbox_OpenFolder = NULL;
     wxEditableListBox* m_Backup_ListBoxFiles = NULL;
 
@@ -200,15 +219,25 @@ public:
     wxTextCtrl* m_MailMerge_Text_LetterSubject = NULL;
     wxTextCtrl* m_MailMerge_Text_LetterBody = NULL;
     wxCheckBox* m_MailMerge_Checkbox_LookforAttachments = NULL;
+    wxCheckBox* m_MailMerge_Checkbox_SendOnlyOneLetter = NULL;
     wxCheckBox* m_MailMerge_Checkbox_ShowLetters = NULL;
     wxCheckBox* m_MailMerge_Checkbox_LookOnlyByAttachments = NULL;
     wxCheckBox* m_MailMerge_Checkbox_AddStaticAttachments = NULL;
     wxEditableListBox* m_MailMerge_ListBoxAttachments = NULL;
     wxButton* m_MailMerge_Button_AddAttachmentFiles = NULL;
 
+
+    //Vac Schedule EE List
+    wxListBox* m_VacSchedule_EEList = NULL;
+    wxListCtrl* m_VacSchedule_Reestr = NULL;
+    wxListCtrl* m_VacSchedule_EEVacList = NULL;
+
+
+
     //EE list buttons
     wxButton* m_EEList_Button_AddBase = NULL;
     wxCheckListBox* m_EEList = NULL;
+    wxCheckListBox* m_EEListDepartment = NULL;
     wxButton* m_EEList_Button_SelectAll = NULL;
     wxButton* m_EEList_Button_SelectNone = NULL;
 
@@ -218,9 +247,8 @@ public:
     wxButton* m_switch_Button_Reestr = NULL;
     wxButton* m_switch_Button_DateDiff = NULL;
     wxButton* m_switch_Button_Backup = NULL;
-    wxButton* m_switch_Button_WorkExp = NULL;
     wxButton* m_switch_Button_MailMerge = NULL;
-    wxButton* m_switch_Button_EEBase = NULL;
+    wxButton* m_switch_Button_VacSchedule = NULL;
 
     wxCheckBox* m_Checkbox_DebugMode = NULL;
 
@@ -252,6 +280,7 @@ EVT_MENU(wx_reestr_OpenReestrAgreements, MyFrame::OnOpenReestrAgreements)
 EVT_BUTTON(wx_reestr_StartMassReminder, MyFrame::OnReestrButtonMassReminder)
 
 EVT_BUTTON(wx_Backup_AddFolder, MyFrame::OnBackupButtonAddFolder)
+EVT_BUTTON(wx_Backup_AddFolderAlt, MyFrame::OnBackupButtonAddFolderAlt)
 EVT_BUTTON(wx_Backup_AddFiles, MyFrame::OnBackupButtonAddFiles)
 EVT_BUTTON(wx_Backup_SaveFilesToINI, MyFrame::OnBackupButtonSaveFilesToINI)
 
@@ -262,23 +291,35 @@ EVT_BUTTON(wx_MailMerge_AddAttachmentFiles, MyFrame::OnMailMergeAddAttachmentFil
 EVT_BUTTON(wx_EElist_AddEEBase, MyFrame::OnEElistAddBase)
 EVT_BUTTON(wx_EElist_SelectAll, MyFrame::OnEElistSelectAll)
 EVT_BUTTON(wx_EElist_SelectNone, MyFrame::OnEElistSelectNone)
+EVT_CHECKLISTBOX(wx_EElist_Department, MyFrame::OnEElistDepartmentSelected)
+
 EVT_MENU(wx_EElist_CreateExampleBase, MyFrame::OnEElistCreateExampleBase)
+
+
+
+
+EVT_MENU(wx_VacSchedule_Menu_OpenBase, MyFrame::OnVacScheduleOpenEEBase)
+
 
 EVT_CHECKBOX(wx_chkBox_All, MyFrame::OnCheckBox)
 
-//EVT_LISTBOX(wx_EEBase_ListSelected, MyFrame::OnEEBaseListSelected)
+EVT_LISTBOX(wx_VacSchedule_EEList, MyFrame::OnVacScheduleEEListSelected)
 
 
-EVT_BUTTON(wx_SwitchPanelsReestr, MyFrame::OnSwitchPanelsReestr)
-EVT_BUTTON(wx_SwitchPanelsDateDifference, MyFrame::OnSwitchPanelsDateDifference)
-EVT_BUTTON(wx_SwitchPanelsBackup, MyFrame::OnSwitchPanelsBackup)
-EVT_BUTTON(wx_SwitchPanelsMailMerge, MyFrame::OnSwitchPanelsMailMerge)
-EVT_BUTTON(wx_SwitchPanelsEEBase, MyFrame::OnSwitchPanelsEEBase)
+EVT_BUTTON(wx_SwitchPanelsReestr, MyFrame::OnSwitchPanelsButton)
+EVT_BUTTON(wx_SwitchPanelsDateDifference, MyFrame::OnSwitchPanelsButton)
+EVT_BUTTON(wx_SwitchPanelsBackup, MyFrame::OnSwitchPanelsButton)
+EVT_BUTTON(wx_SwitchPanelsMailMerge, MyFrame::OnSwitchPanelsButton)
+EVT_BUTTON(wx_SwitchPanelsVacSchedule, MyFrame::OnSwitchPanelsButton)
+
 
 EVT_MENU(wxID_EXIT, MyFrame::OnExit)
 EVT_MENU(wxID_ABOUT, MyFrame::OnAbout)
 
 EVT_MENU(wx_OnLicence, MyFrame::OnLicence)
+EVT_MENU(wx_OnProgramWebsite, MyFrame::OnProgramWebsite)
+
+
 
 wxEND_EVENT_TABLE()
 
@@ -307,6 +348,8 @@ class Panel
 public:
     int iID = 0;
     int iShowDebugText = 1;
+    int iDebugTextPos = 700;
+    int iScrollBarHeight = 19;
     wxButton* SwitchButton = NULL;
     vector<wxControl*> Elements;
     vector<WorkXPDatePickerPair*> WorkExpDatePickers;
@@ -420,7 +463,9 @@ using std::uint8_t;
 #include <boost/algorithm/string_regex.hpp>
 
 
-
+#define Iter (*it)
+#define Iter2 (*it2)
+#define Iter3 (*it3)
 
 using namespace std;
 using namespace OpenXLSX;
@@ -428,7 +473,7 @@ using namespace OpenXLSX;
 #include "WorkerClass.h"
 
 int g_VersionMajor = 1;
-int g_VersionMinor = 0;
+int g_VersionMinor = 1;
 
 int g_CurrentPanel = -1000;
 int g_FileUniqueCount = 0;
@@ -436,19 +481,26 @@ int g_GlobalThresholdUse = 0;
 int g_GlobalThresholdValue = 0;
 int g_DebugMode = 1;
 int g_isBusy = 0;
+
+int g_MailMerge_SendOnlyOneLetter = 0;
 int g_MailMerge_LookforAttachments = 0;
 int g_MailMerge_ShowLetters = 0;
 int g_MailMerge_LookOnlyByAttachments = 0;
 int g_MailMerge_AddStaticAttachments = 0;
 int g_Backup_OpenFolder = 0;
 int g_UseReestrSearch = 0;
+int g_UseVacSchedule = 0;
 
 std::wstring g_ReestrOrdersPath{};
 std::wstring g_ReestrDocsPath{};
 std::wstring g_ReestrAgreementsPath{};
 std::wstring g_BackupFolderPath{};
+std::wstring g_BackupFolderPathAlt{};
 std::wstring g_MailMergeEEBasePath{};
 std::wstring g_MailMergeAttachmentFolderPath{};
+
+std::wstring g_VacScheduleEEBasePath{};
+
 std::wstring g_INIPath = L"Options.ini";
 
 
@@ -458,8 +510,6 @@ int g_ReestrOrdersPathLoaded = 0;
 int g_ReestrAgreementsPathLoaded = 0;
 int g_MailMergeEEBasePathLoaded = 0;
 
-#define Iter (*it)
-
 
 #define t_File_Reestr_Docs 0
 #define t_File_Reestr_Orders 1
@@ -467,12 +517,15 @@ int g_MailMergeEEBasePathLoaded = 0;
 
 #define t_File_Backup_Files 10
 #define t_File_Backup_Folder 11
+#define t_File_Backup_FolderAlt 12
 
 #define t_File_MailMerge_EEBase 21
 #define t_File_MailMerge_AttachmentFolder 22
 #define t_File_MailMerge_AttachmentFiles 23
 
 #define t_File_EElist_BaseToSave 30
+
+#define t_File_VacSchedule_EEBase 40
 
 
 
@@ -481,17 +534,17 @@ int t_Panel_Max = -1;
 #define t_Panel_DateDifference 1
 #define t_Panel_Backup 2
 #define t_Panel_MailMerge 3
-#define t_Panel_EEBase 4
+#define t_Panel_VacSchedule 4
 
 
 #define t_Sheet_Reestr_Orders 0
 #define t_Sheet_Reestr_Overtime 1
 #define t_Sheet_Reestr_Docs 2
 #define t_Sheet_Reestr_Agreements 3
-
+#define t_Sheet_Reestr_Vacations 4
 
 MyFrame* Frame_Main = NULL;
-wxPanel* g_panel_Reestr = NULL;
+wxScrolledWindow* g_panel_Reestr = NULL;
 
 int ReestrSearch_iFoundName = 0;
 int ReestrSearch_iFoundDocuments = 0;
@@ -501,6 +554,7 @@ wstring ReestrSearch_wOutputDebug{};
 HWND g_hWnd;
 
 int g_FrameWidth = 1400;
+int g_FrameWidthMinusScrollBar = g_FrameWidth - 50;
 int g_FrameHeight = 1000;
 
 void f_Add_Menus()
@@ -519,11 +573,15 @@ void f_Add_Menus()
 
     fileMenu->Append(wx_EElist_CreateExampleBase, "Выгрузить шаблон базы работников");
     fileMenu->AppendSeparator();
+    fileMenu->Append(wx_VacSchedule_Menu_OpenBase, "Загрузить базу для Графика отпусков");
+    fileMenu->AppendSeparator();
+
 
     fileMenu->Append(wxID_EXIT, "Выход\tAlt-X", "Выход из программы");
 
     wxMenu* const helpMenu = new wxMenu;
     helpMenu->Append(wx_OnLicence, "Лицензия");
+    helpMenu->Append(wx_OnProgramWebsite, "Посетить сайт программы");
     helpMenu->Append(wxID_ABOUT, "О программе");
 
     wxMenuBar* menuBar = new wxMenuBar();
@@ -591,6 +649,8 @@ void f_Panel_HideAllExcept(int iRequest)
             (*it).SwitchButton->SetBackgroundColour(*wxGREEN);
             f_PanelSetVisibility((*it).iID, 1);
             Frame_Main->m_text->Show((*it).iShowDebugText);
+            Frame_Main->m_text->SetPosition(wxPoint(0, Iter.iDebugTextPos));
+            g_panel_Reestr->SetScrollbars(20, Iter.iScrollBarHeight, 50, 50);
 
         }
 
@@ -769,256 +829,7 @@ bool f_GetBusy()
 #include "ExcelWork.h"
 #include "OpenFileDialog.h"
 
-wxIMPLEMENT_APP(MyApp);
-
-bool MyApp::OnInit()
-{
-    if (!wxApp::OnInit())
-        return false;
-
-    MyFrame* frame = new MyFrame(L"HR Helper v." + f_GetWString_Version());
-
-    frame->Show(true);
-
-    Frame_Main = frame;
-    g_hWnd = frame->GetHandle();
-
-
-    Frame_Main->SetSize(g_FrameWidth, g_FrameHeight);
-
-    //frame->m_timer.Start(1000);
-
-
-    CSimpleIniA ini;
-    ini.SetUnicode();
-
-    if (f_Does_file_exist(g_INIPath) == 0)
-    {
-        ini.SetValue("Settings", "iLastVersion", "0");
-        ini.SetValue("Settings", "bWriteLog", "0");
-
-        ini.SetValue("Settings", "bLoadBaseAutomatically", "1");
-        ini.SetValue("Settings", "bLoadBaseFile", "No_File");
-
-        ini.SetValue("Settings", "bLoadReestrOrders", "1");
-        ini.SetValue("Settings", "bLoadReestrOrdersFile", "No_File");
-
-        ini.SetValue("Settings", "bLoadReestrDocs", "1");
-        ini.SetValue("Settings", "bLoadReestrDocsFile", "No_File");
-
-        ini.SetValue("Settings", "bLoadReestrAgreements", "1");
-        ini.SetValue("Settings", "bLoadReestrAgreementsFile", "No_File");
-
-
-        ini.SetValue("Settings", "bLoadBackupFolder", "1");
-        ini.SetValue("Settings", "bLoadBackupFolderPath", "No_File");
-
-
-        ini.SetValue("BackupFiles", "sBackupFilePath", "No_File");
-
-
-        ini.SetValue("Settings", "bLoadMailMergeBaseEE", "1");
-        ini.SetValue("Settings", "bLoadMailMergeBaseEEFile", "No_File");
-
-        ini.SetValue("Settings", "bLoadMailMergeAttachmentFolder", "1");
-        ini.SetValue("Settings", "bLoadMailMergeAttachmentFolderPath", "No_File");
-
-        ini.SetLongValue("Settings", "iLastPanel", -1);
-
-        ini.SetLongValue("Settings", "bMailMerge_LookForAttachments", 1);
-        ini.SetLongValue("Settings", "bMailMerge_ShowLetters", 0);
-        ini.SetLongValue("Settings", "b_Backup_OpenFolder", 1);
-        ini.SetLongValue("Settings", "bMailMerge_LookOnlyByAttachments", 0);
-        ini.SetLongValue("Settings", "bMailMerge_AddStaticAttachments", 1);
-
-        ini.SetLongValue("Settings", "b_DebugMode", 1);
-
-
-
-
-        ini.SaveFile(g_INIPath.c_str());
-    }
-
-    auto errVal = ini.LoadFile(g_INIPath.c_str());
-
-    if (errVal != SI_Error::SI_FILE)
-    {
-
-        string s_FilePath{};
-        wstring w_FilePath{};
-
-
-        if (ini.GetLongValue("Settings", "bLoadReestrOrders") == 1)
-        {
-            s_FilePath = ini.GetValue("Settings", "bLoadReestrOrdersFile");
-            if (s_FilePath.length() > 0)
-            {
-                w_FilePath = f_string_to_wString(s_FilePath);
-
-                if (f_Does_file_exist(w_FilePath) == 1)
-                {
-                    f_Open_File(t_File_Reestr_Orders, w_FilePath,1);
-                }
-            }
-        }
-
-        if (ini.GetLongValue("Settings", "bLoadReestrDocs") == 1)
-        {
-            s_FilePath = ini.GetValue("Settings", "bLoadReestrDocsFile");
-            if (s_FilePath.length() > 0)
-            {
-                w_FilePath = f_string_to_wString(s_FilePath);
-
-                if (f_Does_file_exist(w_FilePath) == 1)
-                {
-                    f_Open_File(t_File_Reestr_Docs, w_FilePath,1);
-                }
-            }
-        }
-
-        if (ini.GetLongValue("Settings", "bLoadReestrAgreements") == 1)
-        {
-            s_FilePath = ini.GetValue("Settings", "bLoadReestrAgreementsFile");
-            if (s_FilePath.length() > 0)
-            {
-                w_FilePath = f_string_to_wString(s_FilePath);
-
-                if (f_Does_file_exist(w_FilePath) == 1)
-                {
-                    f_Open_File(t_File_Reestr_Agreements, w_FilePath,1);
-                }
-            }
-        }
-
-
-
-        if (ini.GetLongValue("Settings", "bLoadBackupFolder") == 1)
-        {
-            s_FilePath = ini.GetValue("Settings", "bLoadBackupFolderPath");
-
-            if (s_FilePath.length() > 0)
-            {
-                w_FilePath = f_string_to_wString(s_FilePath);
-
-                if (f_Does_file_exist(w_FilePath) == 1)
-                {
-                    f_Open_File(t_File_Backup_Folder, w_FilePath, 1);
-                }
-            }
-
-        }
-
-
-        s_FilePath = ini.GetValue("BackupFiles", "sBackupFilePath");
-
-        if (s_FilePath != "No_File")
-        {
-
-
-            std::vector<std::string> s_AllPaths = SplitString(s_FilePath, "|");
-            for (std::vector<string>::iterator it = s_AllPaths.begin(); it != s_AllPaths.end(); ++it)
-            {
-                if ((*it).length() > 0)
-                {
-                    f_Open_File(t_File_Backup_Files, f_string_to_wString((*it)), 1);
-                }
-
-            }
-
-        }
-
-
-        if (ini.GetLongValue("Settings", "bLoadMailMergeBaseEE") == 1)
-        {
-            s_FilePath = ini.GetValue("Settings", "bLoadMailMergeBaseEEFile");
-
-            if (s_FilePath.length() > 0)
-            {
-                w_FilePath = f_string_to_wString(s_FilePath);
-
-                if (f_Does_file_exist(w_FilePath) == 1)
-                {
-                    f_Open_File(t_File_MailMerge_EEBase, w_FilePath, 1);
-                }
-            }
-
-        }
-
-
-        if (ini.GetLongValue("Settings", "bLoadMailMergeAttachmentFolder") == 1)
-        {
-            s_FilePath = ini.GetValue("Settings", "bLoadMailMergeAttachmentFolderPath");
-
-            if (s_FilePath.length() > 0)
-            {
-                w_FilePath = f_string_to_wString(s_FilePath);
-
-                if (f_Does_file_exist(w_FilePath) == 1)
-                {
-                    f_Open_File(t_File_MailMerge_AttachmentFolder, w_FilePath, 1);
-                }
-            }
-
-        }
-
-       int iLastPanel = ini.GetLongValue("Settings", "iLastPanel");
-       g_MailMerge_LookforAttachments = ini.GetLongValue("Settings", "bMailMerge_LookForAttachments");
-       g_MailMerge_ShowLetters = ini.GetLongValue("Settings", "bMailMerge_ShowLetters");
-       g_DebugMode = ini.GetLongValue("Settings", "b_DebugMode");
-       g_MailMerge_LookOnlyByAttachments = ini.GetLongValue("Settings", "bMailMerge_LookOnlyByAttachments");
-       g_Backup_OpenFolder = ini.GetLongValue("Settings", "b_Backup_OpenFolder");
-       g_MailMerge_AddStaticAttachments = ini.GetLongValue("Settings", "bMailMerge_AddStaticAttachments");
-
-       g_UseReestrSearch = ini.GetLongValue("Settings", "bUseReestrSearch");
-
-
-       if (g_UseReestrSearch != 1)
-       {
-           Frame_Main->m_switch_Button_Reestr->Show(0);
-           if (iLastPanel == t_Panel_Reestr)
-           {
-               iLastPanel = t_Panel_MailMerge;
-           }
-
-       }
-
-
-       Frame_Main->m_MailMerge_Checkbox_LookforAttachments->SetValue(g_MailMerge_LookforAttachments);
-       Frame_Main->m_MailMerge_Checkbox_ShowLetters->SetValue(g_MailMerge_ShowLetters);
-       Frame_Main->m_MailMerge_Checkbox_AddStaticAttachments->SetValue(g_MailMerge_AddStaticAttachments);
-       Frame_Main->m_Backup_Checkbox_OpenFolder->SetValue(g_Backup_OpenFolder);
-       Frame_Main->m_Checkbox_DebugMode->SetValue(g_DebugMode);
-
-
-       f_Add_Menus();
-
-
-        if (iLastPanel >-1 && iLastPanel < t_Panel_Max)
-        {
-            f_Panel_HideAllExcept(iLastPanel);
-        }
-        else {
-            f_Panel_HideAllExcept(t_Panel_MailMerge);
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-    return true;
-
-}
-
-
-
-
-
+#include "OnProgramStart.h"
 #include "p_CreateElements.h"
 
 
@@ -1048,6 +859,11 @@ void MyFrame::OnEElistCreateExampleBase(wxCommandEvent& WXUNUSED(event))
     f_Save_File_Dialog(t_File_EElist_BaseToSave);
 }
 
+void MyFrame::OnVacScheduleOpenEEBase(wxCommandEvent& WXUNUSED(event))
+{
+    m_text->AppendText("Opening EE Vac schedule file\n");
+    f_Open_File_Dialog(t_File_VacSchedule_EEBase);
+}
 
 
 
@@ -1074,7 +890,7 @@ void MyFrame::OnDateDiffButtonPressed(wxCommandEvent& WXUNUSED(event))
 #include "p_MailMerge.h"
 #include "p_Reestr.h"
 #include "p_Backup.h"
-
+#include "p_VacSchedule.h"
 
 
 
@@ -1138,6 +954,46 @@ void MyFrame::OnEElistSelectNone(wxCommandEvent& WXUNUSED(event))
 }
 
 
+void MyFrame::OnEElistDepartmentSelected(wxCommandEvent& event)
+{
+
+    int iChecked = Frame_Main->m_EEListDepartment->IsChecked(event.GetInt());
+    wstring w_Chosen_Department = event.GetString();
+
+    if (iChecked)
+    {
+        Frame_Main->m_text->AppendText("\nВыбрано подразделение::");
+    }
+    else {
+        Frame_Main->m_text->AppendText("\nУбрано подразделение::");
+    }
+
+    Frame_Main->m_text->AppendText(w_Chosen_Department);
+
+
+
+    int iIndexFound = -1;
+
+    for (std::vector<Worker*>::iterator it = g_WorkerArray.begin(); it != g_WorkerArray.end(); ++it)
+    {
+        Frame_Main->m_text->AppendText("\nCOMPARING::" + w_Chosen_Department + " with " + Iter->EEDepartment);
+
+        if (boost::iequals(w_Chosen_Department, Iter->EEDepartment))
+        {
+            Frame_Main->m_text->AppendText("Found match");
+            iIndexFound = Frame_Main->m_EEList->FindString(Iter->EENameFull);
+            Frame_Main->m_text->AppendText("iIndexFound is " + to_string(iIndexFound));
+
+            m_EEList->Check(iIndexFound, iChecked);
+        }
+    }
+
+
+
+}
+
+
+
 
 
 void MyFrame::OnCheckBox(wxCommandEvent& event)
@@ -1173,7 +1029,21 @@ void MyFrame::OnCheckBox(wxCommandEvent& event)
         g_MailMerge_AddStaticAttachments = event.IsChecked();
         f_SetINILong("Settings", "bMailMerge_AddStaticAttachments", g_MailMerge_AddStaticAttachments);
     }
+    else if (event.GetEventObject() == m_MailMerge_Checkbox_SendOnlyOneLetter)
+    {
+        g_MailMerge_SendOnlyOneLetter = event.IsChecked();
+        f_SetINILong("Settings", "bMailMerge_SendOnlyOneLetter", g_MailMerge_SendOnlyOneLetter);
+    }
 
+}
+
+
+void MyFrame::OnVacScheduleEEListSelected(wxCommandEvent& event)
+{
+    Frame_Main->m_text->AppendText("\nВыбран::");
+    wstring w_Chosen_WorkerName = event.GetString();
+    Frame_Main->m_text->AppendText(w_Chosen_WorkerName);
+    f_VacSchedule_Run_Selection_For(w_Chosen_WorkerName);
 }
 
 
@@ -1215,6 +1085,26 @@ void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 }
 
 
+void MyFrame::OnProgramWebsite(wxCommandEvent& WXUNUSED(event))
+{
+    int argc;
+    char* argv[4000];
+
+    int i = 1;
+    string url = "https://github.com/praudmur/HR-Helper/releases";
+
+    for (; i < argc; i++) {
+        url = url + string(argv[i]);
+        if (i != argc - 1) url = url + string("+");
+    }
+
+    //cout << url << endl;
+    string op = string("start ").append(url);
+    system(op.c_str());
+
+}
+
+
 void MyFrame::OnLicence(wxCommandEvent& WXUNUSED(event))
 {
 
@@ -1250,30 +1140,29 @@ void MyFrame::OnLicence(wxCommandEvent& WXUNUSED(event))
 }
 
 
-void MyFrame::OnSwitchPanelsReestr(wxCommandEvent& WXUNUSED(event))
+void MyFrame::OnSwitchPanelsButton(wxCommandEvent& event)
 {
-    f_Panel_HideAllExcept(t_Panel_Reestr);
+
+    if (event.GetEventObject() == Frame_Main->m_switch_Button_DateDiff)
+    {
+        f_Panel_HideAllExcept(t_Panel_DateDifference);
+    }
+    else if (event.GetEventObject() == Frame_Main->m_switch_Button_Reestr)
+    {
+        f_Panel_HideAllExcept(t_Panel_Reestr);
+        
+    }else if (event.GetEventObject() == Frame_Main->m_switch_Button_Backup)
+    {
+        f_Panel_HideAllExcept(t_Panel_Backup);
+    }else if (event.GetEventObject() == Frame_Main->m_switch_Button_MailMerge)
+    {
+        f_Panel_HideAllExcept(t_Panel_MailMerge);
+    }else if (event.GetEventObject() == Frame_Main->m_switch_Button_VacSchedule)
+    {
+        f_Panel_HideAllExcept(t_Panel_VacSchedule);
+    }
 }
 
-void MyFrame::OnSwitchPanelsDateDifference(wxCommandEvent& WXUNUSED(event))
-{
-    f_Panel_HideAllExcept(t_Panel_DateDifference);
-}
-
-void MyFrame::OnSwitchPanelsBackup(wxCommandEvent& WXUNUSED(event))
-{
-    f_Panel_HideAllExcept(t_Panel_Backup);
-}
-
-void MyFrame::OnSwitchPanelsMailMerge(wxCommandEvent& WXUNUSED(event))
-{
-    f_Panel_HideAllExcept(t_Panel_MailMerge);
-}
-
-void MyFrame::OnSwitchPanelsEEBase(wxCommandEvent& WXUNUSED(event))
-{
-    f_Panel_HideAllExcept(t_Panel_EEBase);
-}
 
 
 #include <time.h>
@@ -1288,10 +1177,49 @@ using namespace std;
 
 
 
+void MyFrame::OnMouseDoubleClick(wxMouseEvent& event)
+{
+
+    //if (event.GetEventType() == wxEVT_LEFT_DOWN)
+
+    Frame_Main->m_text->AppendText("DOUBLE CLICK");
+
+    if (event.GetEventObject() == Frame_Main->m_Backup_Status_BackupFolderPath)
+    {
+        if ( f_Does_file_exist(g_BackupFolderPath))
+            ShellExecute(NULL, _T("explore"), g_BackupFolderPath.c_str(), NULL, NULL, SW_SHOW);
+
+
+    }
+    else if (event.GetEventObject() == Frame_Main->m_Backup_Status_BackupFolderPathAlt)
+    {
+        if (f_Does_file_exist(g_BackupFolderPathAlt))
+            ShellExecute(NULL, _T("explore"), g_BackupFolderPathAlt.c_str(), NULL, NULL, SW_SHOW);
+    }else if (event.GetEventObject() == Frame_Main->m_MailMerge_Status_AttachmentFolderPath)
+    {
+        if (f_Does_file_exist(g_MailMergeAttachmentFolderPath))
+            ShellExecute(NULL, _T("explore"), g_MailMergeAttachmentFolderPath.c_str(), NULL, NULL, SW_SHOW);
+    }
+
+
+}
+
+
 void MyFrame::OnKeyPress(wxKeyEvent& event)
 {
 
     event.Skip();
+
+    //m_reestr_Status_ReestrOrdersPath
+    //m_reestr_Status_ReestrDocsPath
+    //m_reestr_Status_ReestrAgreementsPath
+
+    //if (wxGetKeyState(WXK_RETURN)) // ENTER
+    //{
+
+
+
+    //}
 
 
     if (wxGetKeyState(WXK_CONTROL_V) && wxGetKeyState(WXK_CONTROL))
